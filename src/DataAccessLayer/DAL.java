@@ -88,5 +88,63 @@ public class DAL {
         }
         return result;
     }
+	public boolean isUsernameExists(String username) throws SQLException 
+	{
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        boolean exists = false;
+
+        try {
+            String sql = "SELECT COUNT(*) FROM PlayerInfo WHERE username = ?";
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, username);
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (count > 0) {
+                    exists = true;
+                }
+            }
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+
+        return exists;
+    }
+
+    public ArrayList<PlayerDTO> getAllPlayers() throws SQLException
+
+	{
+        ArrayList<PlayerDTO> players = new ArrayList<>();
+        String query = "SELECT * FROM PlayerInfo";
+
+        try {
+            pst = con.prepareStatement(query);
+            rs = pst.executeQuery();
+
+            while (rs.next()) {
+                PlayerDTO player = new PlayerDTO();
+                player.setScreenIndicator(rs.getInt("score"));
+                player.setUsername(rs.getString("username"));
+                player.setPassword(rs.getString("password"));
+                player.setEmail(rs.getString("email"));
+                player.setStatus(rs.getString("status"));
+                players.add(player);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            closeResources();
+        }
+
+        return players;
+    }
 
 }
