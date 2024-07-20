@@ -85,5 +85,71 @@ private ObjectInputStream dis;
                     }
 
                 }
+                else if (receivedObject instanceof RequestDTO) {
+                    RequestDTO request = (RequestDTO) receivedObject;
+                    System.out.println("Received RequestDTO with screenIndicator: " + request.getScreenIndicator());
+                    switch (request.getScreenIndicator()) {
+                        case 5: // sending sequest to another player 
+                            String receiverUsername = request.getReciver_username();
+
+                            for (ClientHandler client : clients) {
+                                System.out.println("Checking client: " + client.username);
+                                if (receiverUsername.equals(client.username)) {
+                                    request.setScreenIndicator(8);
+                                    client.dos.writeObject(request);
+                                    client.dos.flush();
+                                    System.out.println("Sent request to client: " + receiverUsername);
+                                    break;
+                                }
+                            }
+                            break;
+                        case 6: // accepting the request 
+                            String senderUsername = request.getReciver_username();
+                            System.out.println("Accepted request from: " + senderUsername);
+                            for (ClientHandler client : clients) {
+                                System.out.println("Checking client: " + client.username);
+                                if (senderUsername.equals(client.username)) {
+                                    request.setScreenIndicator(6);
+                                    client.dos.writeObject(request);
+                                    client.dos.flush();
+                                    System.out.println("Sent acceptance to client: " + senderUsername);
+                                    break;
+                                }
+                            }
+                            break;
+                        default:
+                            System.out.println("Unhandled screenIndicator: " + request.getScreenIndicator());
+                            break;
+                    }
+                }
+
+                dos.flush();
+            }
+        } catch (SocketException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, "SocketException: Connection reset", ex);
+        } catch (IOException | ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                if (dis != null) {
+                    dis.close();
+                }
+                if (dos != null) {
+                    dos.close();
+                }
+                synchronized (clients) {
+                    clients.remove(this);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 }
+    private static void logConnectedClients() {
+        System.out.println("Connected clients:");
+        for (ClientHandler client : clients) {
+            System.out.println("- " + client.username);
+        }
+    }
+            
 }
