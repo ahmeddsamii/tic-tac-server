@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class DAL {
 
@@ -145,6 +146,98 @@ public class DAL {
         }
 
         return players;
+    }
+    
+    public String getRequestedIp(String username) {
+        String query = "SELECT player_ip FROM PlayerInfo WHERE username=?";
+        String ip = null;
+
+        try {
+            pst = con.prepareStatement(query);
+            pst.setString(1, username);
+            rs = pst.executeQuery();
+
+            if (rs.next()) {
+                ip = rs.getString("player_ip");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+
+        return ip;
+    }
+
+    public ArrayList<PlayerDTO> getOnlinePlayers() throws SQLException {
+        ArrayList<PlayerDTO> players = new ArrayList<>();
+        String query = "SELECT * FROM PlayerInfo WHERE status='online'";
+
+        try {
+            pst = con.prepareStatement(query);
+            rs = pst.executeQuery();
+
+            while (rs.next()) {
+                PlayerDTO player = new PlayerDTO();
+                player.setScreenIndicator(rs.getInt("score"));
+                player.setUsername(rs.getString("username"));
+                player.setPassword(rs.getString("password"));
+                player.setEmail(rs.getString("email"));
+                player.setStatus(rs.getString("status"));
+                players.add(player);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            closeResources();
+        }
+
+        return players;
+    }
+
+    public PlayerDTO getPlayerByUsername(String username) throws SQLException {
+        PlayerDTO player = null;
+        String query = "SELECT * FROM PlayerInfo WHERE username = ?";
+
+        try {
+            pst = con.prepareStatement(query);
+            pst.setString(1, username);
+            rs = pst.executeQuery();
+
+            if (rs.next()) {
+                player = new PlayerDTO();
+                player.setScreenIndicator(rs.getInt("score"));
+                player.setUsername(rs.getString("username"));
+                player.setPassword(rs.getString("password"));
+                player.setEmail(rs.getString("email"));
+                player.setStatus(rs.getString("status"));
+            }
+        } finally {
+            closeResources();
+        }
+
+        return player;
+    }
+
+    public void close() {
+        closeResources();
+    }
+
+    private void closeResources() {
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+            if (pst != null) {
+                pst.close();
+            }
+            if (con != null) {
+                con.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }
